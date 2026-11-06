@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="known.my.mapper.UserMapper">
+    <!--根据用户名查询用户-->
+    <select id="selectUserByUsername" resultType="known.my.pojo.entity.User">
+        select * from users where username = #{username}
+    </select>
+    <select id="selectUserById" resultType="known.my.pojo.entity.User">
+        select * from users where id = #{id}
+    </select>
+    <!--创建新用户-->
+    <insert id="insertNewUser" parameterType="known.my.pojo.entity.User">
+        insert into users (username, password_hash, email, nickname, created_at)
+        values (#{username}, #{passwordHash}, #{email}, #{nickname}, #{createTime})
+    </insert>
+    <update id="updateProfile">
+        update users
+        <set>
+            <if test="profile.nicknameProvided">nickname = #{profile.nickname},</if>
+            <if test="profile.emailProvided">email = #{profile.email},</if>
+            <if test="profile.avatarUrlProvided">avatar_url = #{profile.avatarUrl},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updatePassword" parameterType="known.my.pojo.entity.User">
+        update users
+        set password_hash = #{passwordHash}, updated_at = CURRENT_TIMESTAMP
+        where id = #{id}
+    </update>
+</mapper>

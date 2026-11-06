@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+
+spring:
+  application:
+    name: ai-interview
+  profiles:
+    # 默认启用 dev 环境，本地配置写在 application-dev.yaml
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${spring.datasource.driver-class-name}
+      url: ${spring.datasource.url}
+      username: ${spring.datasource.username}
+      password: ${spring.datasource.password}
+  data:
+    redis:
+      host: ${spring.data.redis.host}
+      port: ${spring.data.redis.port}
+      password: ${spring.data.redis.password}
+mybatis:
+  # mapper 配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: known.my.pojo.entity
+  configuration:
+    # 开启驼峰命名
+    map-underscore-to-camel-case: true
+
+sky:
+  jwt:
+    user-secret-key: itcast
+    user-ttl: 720000000
+    user-token-name: authentication
