@@ -34,3 +34,7 @@ sky:
     user-secret-key: itcast
     user-ttl: 720000000
     user-token-name: authentication
+
+python:
+  agent:
+    base-url: ${python.agent.base-url}

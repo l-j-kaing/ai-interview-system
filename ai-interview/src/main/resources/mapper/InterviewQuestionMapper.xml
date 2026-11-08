@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="known.my.mapper.InterviewQuestionMapper">
+    <insert id="insertInterviewQuestion" parameterType="known.my.pojo.entity.InterviewQuestion"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into interview_questions
+                (interview_id, user_id, question_no, question_content, difficulty, score, evaluation, answer_count,
+                 follow_up_count, status)
+        values
+                (#{interviewId}, #{userId}, #{questionNo}, #{questionContent}, #{difficulty}, #{score}, #{evaluation},
+                 #{answerCount}, #{followUpCount}, #{status})
+    </insert>
+
+    <select id="selectQuestionsByInterviewId" resultType="known.my.pojo.entity.InterviewQuestion">
+        select * from interview_questions
+        where interview_id = #{interviewId}
+        order by question_no asc, id asc
+    </select>
+
+    <update id="updateInterviewQuestionEvaluation">
+        update interview_questions
+        set evaluation = #{evaluation},
+            score = #{score},
+            updated_at = current_timestamp
+        where id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="known.my.mapper.InterviewMessageMapper">
+    <insert id="insertInterviewMessage" parameterType="known.my.pojo.entity.InterviewMessage"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into interview_messages (interview_id, user_id, question_no, role, content)
+        values (#{interviewId}, #{userId}, #{questionNo}, #{role}, #{content})
+    </insert>
+
+    <select id="selectMessagesByInterviewId" resultType="known.my.pojo.entity.InterviewMessage">
+        select * from interview_messages
+        where interview_id = #{interviewId}
+        order by created_at asc, id asc
+    </select>
+</mapper>

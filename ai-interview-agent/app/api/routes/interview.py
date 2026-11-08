@@ -1,14 +1,23 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Request
 
-from app.api.schemas.interview import InterviewStartRequest
+from app.api.schemas.interview import InterviewStartResponse,InterviewStartRequest
+from app.services.interview_service import InterviewService
 
-router = APIRouter(prefix="/interview", tags=["interview"])
+router = APIRouter(
+    prefix="/api/interview",
+    tags=["Interview"]
+)
 
+#生成第一道面试题
+@router.post("/start", response_model=InterviewStartResponse)
+async def start_interview(
+    data: InterviewStartRequest,
+    request:Request
+):
+    #获取graph
+    graph = request.app.state.interview_graph
 
-@router.post("/start", status_code=status.HTTP_501_NOT_IMPLEMENTED)
-async def start_interview(request: InterviewStartRequest) -> None:
-    """面试启动工作流的占位接口。"""
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="面试工作流尚未实现。",
-    )
+    return InterviewService.start_interview(
+        data,
+        graph
+        )

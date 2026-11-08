@@ -13,6 +13,17 @@ class Settings:
         "JAVA_API_BASE_URL",
         "http://localhost:8080",
     )
+    deepseek_model: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    deepseek_api_key: str | None = os.getenv("DEEPSEEK_API_KEY")
+    deepseek_base_url: str = os.getenv(
+        "DEEPSEEK_BASE_URL",
+        "https://api.deepseek.com",
+    )
+    redis_url: str = os.getenv("REDIS_URL")
 
+    # Checkpoint 过期时间，单位：分钟
+    redis_checkpoint_ttl: int = int(
+        os.getenv("REDIS_CHECKPOINT_TTL", "43200")
+    )
 
 settings = Settings()

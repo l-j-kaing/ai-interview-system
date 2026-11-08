@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="known.my.mapper.InterviewMapper">
+    <insert id="insertInterview" parameterType="known.my.pojo.entity.Interview">
+        insert into interviews
+            (interview_id, user_id, job_position, tech_direction, difficulty_mode, status,
+             question_count, started_at)
+        values
+            (#{interviewId}, #{userId}, #{jobPosition}, #{techDirection}, #{difficultyMode},
+             #{status}, #{questionCount}, #{startedAt})
+    </insert>
+
+    <select id="selectInterviewById" resultType="known.my.pojo.entity.Interview">
+        select * from interviews where interview_id = #{interviewId}
+    </select>
+
+    <select id="selectInterviewsByUserId" resultType="known.my.pojo.entity.Interview">
+        select * from interviews where user_id = #{userId} order by created_at desc
+    </select>
+
+    <update id="updateInterviewStatus">
+        update interviews
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="questionCount != null">question_count = #{questionCount},</if>
+            <if test="finishedAt != null">finished_at = #{finishedAt},</if>
+            updated_at = current_timestamp
+        </set>
+        where interview_id = #{interviewId}
+    </update>
+</mapper>

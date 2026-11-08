@@ -1,21 +1,28 @@
-from typing import Literal
+from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel,Field
 
+class DifficultyMode(str, Enum):
+    AUTO = "AUTO"
+    EASY = "EASY"
+    MEDIUM = "MEDIUM"
+    HARD = "HARD"
+
+class Difficulty(str, Enum):
+    EASY = "EASY"
+    MEDIUM = "MEDIUM"
+    HARD = "HARD"
 
 class InterviewStartRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    job_position: str = Field(min_length=1, max_length=100)
-    tech_direction: str = Field(min_length=1, max_length=100)
-    difficulty_mode: Literal["EASY", "MEDIUM", "HARD", "AUTO"]
-
-
-class InterviewStartResponse(BaseModel):
     interview_id: str
     job_position: str
     tech_direction: str
-    difficulty_mode: Literal["EASY", "MEDIUM", "HARD", "AUTO"]
-    current_difficulty: Literal["EASY", "MEDIUM", "HARD"]
-    status: str
-    question_count: int
+    difficulty_mode: DifficultyMode
+    current_difficulty: Difficulty
+
+
+class InterviewStartResponse(BaseModel):
+    question: str = Field(..., description="AI 生成的首道面试题")
+    difficulty: Difficulty=Field(..., description="当前面试题的难度")
+    question_no: int = Field(..., description="当前面试题的编号")
+    interview_id: str = Field(..., description="本次面试的唯一标识")
