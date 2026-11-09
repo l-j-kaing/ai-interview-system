@@ -4,11 +4,9 @@
 <mapper namespace="known.my.mapper.InterviewMapper">
     <insert id="insertInterview" parameterType="known.my.pojo.entity.Interview">
         insert into interviews
-            (interview_id, user_id, job_position, tech_direction, difficulty_mode, status,
-             question_count, started_at)
+            (interview_id, user_id, job_position, tech_direction, difficulty_mode, status)
         values
-            (#{interviewId}, #{userId}, #{jobPosition}, #{techDirection}, #{difficultyMode},
-             #{status}, #{questionCount}, #{startedAt})
+            (#{interviewId}, #{userId}, #{jobPosition}, #{techDirection}, #{difficultyMode}, #{status})
     </insert>
 
     <select id="selectInterviewById" resultType="known.my.pojo.entity.Interview">
@@ -19,12 +17,13 @@
         select * from interviews where user_id = #{userId} order by created_at desc
     </select>
 
-    <update id="updateInterviewStatus">
+    <update id="updateInterviewFieldsByInterviewId">
         update interviews
         <set>
             <if test="status != null">status = #{status},</if>
             <if test="questionCount != null">question_count = #{questionCount},</if>
             <if test="finishedAt != null">finished_at = #{finishedAt},</if>
+            <if test="startedAt != null">started_at = #{startedAt},</if>
             updated_at = current_timestamp
         </set>
         where interview_id = #{interviewId}

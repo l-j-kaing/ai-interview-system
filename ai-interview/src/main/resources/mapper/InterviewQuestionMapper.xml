@@ -5,24 +5,27 @@
     <insert id="insertInterviewQuestion" parameterType="known.my.pojo.entity.InterviewQuestion"
             useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         insert into interview_questions
-                (interview_id, user_id, question_no, question_content, difficulty, score, evaluation, answer_count,
-                 follow_up_count, status)
+                (interview_id, user_id, question_no, question_content, difficulty, status)
         values
-                (#{interviewId}, #{userId}, #{questionNo}, #{questionContent}, #{difficulty}, #{score}, #{evaluation},
-                 #{answerCount}, #{followUpCount}, #{status})
+                (#{interviewId}, #{userId}, #{questionNo}, #{questionContent}, #{difficulty}, #{status})
     </insert>
 
-    <select id="selectQuestionsByInterviewId" resultType="known.my.pojo.entity.InterviewQuestion">
+    <select id="selectLatestQuestionByInterviewId" resultType="known.my.pojo.entity.InterviewQuestion">
         select * from interview_questions
         where interview_id = #{interviewId}
-        order by question_no asc, id asc
+        order by question_no desc, id desc
+        limit 1
     </select>
 
-    <update id="updateInterviewQuestionEvaluation">
+    <update id="updateQuestionByInterviewIdAndQuestionNo">
         update interview_questions
-        set evaluation = #{evaluation},
-            score = #{score},
+        <set>
+            <if test="score != null">score = #{score},</if>
+            <if test="evaluation != null">evaluation = #{evaluation},</if>
+            <if test="status != null">status = #{status},</if>
             updated_at = current_timestamp
-        where id = #{id}
+        </set>
+        where interview_id = #{interviewId}
+          and question_no = #{questionNo}
     </update>
 </mapper>

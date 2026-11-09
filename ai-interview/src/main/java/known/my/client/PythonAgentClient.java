@@ -1,6 +1,8 @@
 package known.my.client;
 
+import known.my.pojo.request.AgentInterviewContinueRequest;
 import known.my.pojo.request.AgentInterviewStartRequest;
+import known.my.pojo.response.AgentInterviewContinueResponse;
 import known.my.pojo.response.AgentInterviewStartResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -49,5 +51,22 @@ public class PythonAgentClient {
                 .retrieve()
                 .body(AgentInterviewStartResponse.class);
     }
-
+    /**
+     * 请求 Python Agent 继续面试
+     */
+    public AgentInterviewContinueResponse continueInterview(
+            AgentInterviewContinueRequest request
+    ) {
+        Map<String, String> requestBody = Map.of(
+                "interview_id", request.getInterviewId(),
+                "answer", request.getAnswer()
+        );
+        String jsonBody = objectMapper.writeValueAsString(requestBody);
+        return restClient.post()
+                .uri("/api/interview/continue")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(jsonBody)
+                .retrieve()
+                .body(AgentInterviewContinueResponse.class);
+    }
 }

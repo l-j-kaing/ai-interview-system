@@ -2,7 +2,9 @@ package known.my.controller;
 
 import jakarta.validation.Valid;
 import known.my.common.result.Result;
+import known.my.pojo.dto.InterviewContinueDTO;
 import known.my.pojo.dto.InterviewStartDTO;
+import known.my.pojo.vo.InterviewContinueVO;
 import known.my.pojo.vo.InterviewStartVO;
 import known.my.service.InterviewService;
 import lombok.AllArgsConstructor;
@@ -28,5 +30,15 @@ public class InterviewController {
         log.info("开始面试");
         InterviewStartVO interviewStartVO = interviewService.startInterview(interviewStartDTO);
         return Result.success(interviewStartVO);
+    }
+    /**
+     * 继续面试
+     */
+    @PostMapping("/continue")
+    public Result<InterviewContinueVO> continueInterview(@RequestBody
+                                                          @Valid InterviewContinueDTO interviewContinueDTO) {
+        log.info("继续面试");
+        InterviewContinueVO interviewContinueVO = interviewService.continueInterview(interviewContinueDTO);
+        return Result.success(interviewContinueVO);
     }
 }

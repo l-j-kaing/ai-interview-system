@@ -75,7 +75,8 @@ def evaluate_answer(state: InterviewState) -> dict:
 
     # 使用结构化输出，让模型按照 Pydantic 模型返回结果
     structured_llm = llm.with_structured_output(
-        AnswerProcessEvaluation
+        AnswerProcessEvaluation,
+        method="function_calling",
     )
 
     prompt = f"""
@@ -132,11 +133,10 @@ def wait_for_answer(state: InterviewState) -> dict:
     """
 
     answer = interrupt({
+        "type": "answer_required",
         "interview_id": state["interview_id"],
         "current_question": state["current_question"],
         "question_no": state.get("question_no"),
-        "current_difficulty": state["current_difficulty"]
-
     })
     answer_times = state.get("answer_times", 0) + 1
 
@@ -288,7 +288,8 @@ def generate_question_evaluation(state: InterviewState) -> dict:
 
 
     structured_llm = llm.with_structured_output(
-        QuestionEvaluation
+        QuestionEvaluation,
+        method="function_calling",
     )
 
     prompt = f"""

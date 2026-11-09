@@ -1,6 +1,16 @@
 """面试业务编排入口。"""
-from langgraph.graph.state import CompiledStateGraph
-from app.api.schemas.interview import InterviewStartRequest, InterviewStartResponse
+from fastapi import HTTPException
+from langchain_core.messages import AIMessage
+from langgraph.graph.state import Command, CompiledStateGraph
+from pydantic import BaseModel
+
+from app.api.schemas.interview import (
+    InterruptStatus,
+    InterviewContinueRequest,
+    InterviewContinueResponse,
+    InterviewStartRequest,
+    InterviewStartResponse,
+)
 
 class InterviewService:
 
@@ -36,4 +46,105 @@ class InterviewService:
             question=result["current_question"],
             difficulty=result["current_difficulty"],
             question_no=result["question_no"]
+        )
+
+    @staticmethod
+    def continue_interview(data:InterviewContinueRequest,
+                           graph:CompiledStateGraph) -> InterviewContinueResponse:
+        config = {
+            "configurable": {
+                "thread_id": data.interview_id,
+            }
+        }
+        checkpoint = graph.get_state(config)
+        if not checkpoint.values:
+            raise HTTPException(
+                status_code=404,
+                detail="未找到该面试会话",
+            )
+        if not any(task.interrupts for task in checkpoint.tasks):
+            raise HTTPException(
+                status_code=409,
+                detail="该面试当前没有等待提交的回答",
+            )
+
+        current_question_no = checkpoint.values.get("question_no")
+        if not isinstance(current_question_no, int):
+            raise HTTPException(
+                status_code=409,
+                detail="面试状态缺少有效的当前题号",
+            )
+
+        result = graph.invoke(
+            Command(resume=data.answer),
+            config=config,
+        )
+
+        if result.get("__interrupt__"):
+            result_question_no = result.get("question_no")
+            question = result.get("current_question")
+            difficulty = result.get("current_difficulty")
+            if not isinstance(result_question_no, int) or not question or not difficulty:
+                raise HTTPException(
+                    status_code=500,
+                    detail="面试流程恢复后缺少当前题目状态",
+                )
+
+            if result_question_no > current_question_no:
+                evaluation = result.get("question_evaluation")
+                if isinstance(evaluation, BaseModel):
+                    evaluation = evaluation.model_dump(mode="json")
+                if not isinstance(evaluation, dict):
+                    raise HTTPException(
+                        status_code=500,
+                        detail="已完成题目缺少有效的评价结果",
+                    )
+                return InterviewContinueResponse(
+                    status=InterruptStatus.NEXT_QUESTION,
+                    question_no=result_question_no,
+                    question=question,
+                    difficulty=difficulty,
+                    completed_question_no=current_question_no,
+                    question_evaluation=evaluation,
+                )
+
+            messages = result.get("messages", [])
+            latest_assistant_message = next(
+                (
+                    message
+                    for message in reversed(messages)
+                    if isinstance(message, AIMessage)
+                ),
+                None,
+            )
+            response_text = (
+                latest_assistant_message.content
+                if latest_assistant_message is not None
+                else None
+            )
+            if not isinstance(response_text, str) or not response_text.strip():
+                raise HTTPException(
+                    status_code=500,
+                    detail="面试流程恢复后缺少有效的提示或追问内容",
+                )
+
+            return InterviewContinueResponse(
+                status=InterruptStatus.CONTINUE,
+                question_no=result_question_no,
+                question=response_text,
+            )
+
+        result_question_no = result.get("question_no")
+        evaluation = result.get("question_evaluation")
+        if isinstance(evaluation, BaseModel):
+            evaluation = evaluation.model_dump(mode="json")
+        if not isinstance(result_question_no, int) or not isinstance(evaluation, dict):
+            raise HTTPException(
+                status_code=500,
+                detail="面试结束时缺少有效的题目评价结果",
+            )
+        return InterviewContinueResponse(
+            status=InterruptStatus.FINISHED,
+            question_no=result_question_no,
+            question_evaluation=evaluation,
         )

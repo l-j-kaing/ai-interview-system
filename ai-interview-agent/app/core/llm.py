@@ -8,4 +8,5 @@ llm = ChatOpenAI(
     api_key=settings.deepseek_api_key,
     base_url=settings.deepseek_base_url,
     temperature=0.7,
+    extra_body={"thinking": {"type": "disabled"}},
 )

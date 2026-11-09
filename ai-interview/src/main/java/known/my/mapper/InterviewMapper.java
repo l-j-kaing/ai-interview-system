@@ -21,9 +21,10 @@ public interface InterviewMapper {
     /** 查询指定用户的面试记录，按创建时间倒序排列。 */
     List<Interview> selectInterviewsByUserId(@Param("userId") Long userId);
 
-    /** 更新面试状态、题目数量和结束时间；传入 null 的字段不更新。 */
-    int updateInterviewStatus(@Param("interviewId") String interviewId,
-                              @Param("status") String status,
-                              @Param("questionCount") Integer questionCount,
-                              @Param("finishedAt") LocalDateTime finishedAt);
+    /** 更新面试状态、题目数量和时间字段；传入 null 的字段不更新。 */
+    int updateInterviewFieldsByInterviewId(@Param("interviewId") String interviewId,
+                                           @Param("status") String status,
+                                           @Param("questionCount") Integer questionCount,
+                                           @Param("finishedAt") LocalDateTime finishedAt,
+                                           @Param("startedAt") LocalDateTime startedAt);
 }

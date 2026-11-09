@@ -24,10 +24,6 @@ public class InterviewQuestion {
     private String questionContent;
     /** 本题难度。 */
     private String difficulty;
-    /** 候选人针对本题的回答次数。 */
-    private Integer answerCount;
-    /** 本题已追问次数。 */
-    private Integer followUpCount;
     /** 本题状态。 */
     private String status;
     /** 本题评分。 */
