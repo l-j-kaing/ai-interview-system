@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from app.agents.interview.graph import build_interview_graph
 from app.core.checkpointer import create_checkpointer
-from app.api.routes import interview_router
+from app.api.routes import interview_router, knowledge_router
 from app.core.redis import redis_client
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
         # 1. 检查普通 Redis 客户端连接
         await redis_client.ping()
         app.state.redis_client = redis_client
+        app.state.redis = redis_client
         print("Redis 客户端连接成功")
 
         # 2. 创建并管理 LangGraph Redis Checkpointer 生命周期
@@ -46,4 +47,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AI 面试 Agent 服务"
               ,lifespan=lifespan)
 app.include_router(interview_router)
-
+app.include_router(knowledge_router)

@@ -1,10 +1,11 @@
 package known.my.service.impl;
 
 import known.my.common.exception.BaseException;
+import known.my.common.properties.FileStorageProperties;
 import known.my.common.result.ResultCode;
 import known.my.service.FileStorageService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -21,12 +22,12 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FileStorageServiceImpl implements FileStorageService {
     private static final Set<String> ALLOWED_EXTENSIONS =
             Set.of("pdf");
 
-    @Value("${app.file-storage.root-dir}")
-    private String rootDir;
+    private final FileStorageProperties fileStorageProperties;
     /**
      * 保存文件
      */
@@ -54,7 +55,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         String relativePath = userId + "/" + fileId + "."
                 + extension.toLowerCase();
 
-        Path rootPath = Paths.get(rootDir).toAbsolutePath().normalize();
+        Path rootPath = Paths.get(fileStorageProperties.getLocalRoot()).toAbsolutePath().normalize();
         Path targetPath = rootPath.resolve(relativePath).normalize();
 
         // 防止路径越界
@@ -133,7 +134,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new BaseException(ResultCode.INTERNAL_ERROR,"文件存储路径不能为空");
         }
 
-        Path rootPath = Paths.get(rootDir).toAbsolutePath().normalize();
+        Path rootPath = Paths.get(fileStorageProperties.getLocalRoot()).toAbsolutePath().normalize();
         Path relativePath = Paths.get(storagePath);
 
         if (relativePath.isAbsolute()) {

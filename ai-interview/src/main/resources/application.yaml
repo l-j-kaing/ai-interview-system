@@ -35,9 +35,9 @@ python:
 
 known:
   my:
-    KnowledgeFile:
-      local-root: ${known.my.KnowledgeFile.storage-path}
-  jwt:
-    user-secret-key: itcast
-    user-ttl: 720000000
-    user-token-name: authentication
+    knowledge-file:
+      local-root: ${known.my.knowledge-file.storage-path}
+    jwt:
+      user-secret-key: itcast
+      user-ttl: 720000000
+      user-token-name: authentication

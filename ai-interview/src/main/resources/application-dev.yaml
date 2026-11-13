@@ -17,5 +17,5 @@ python:
 
 known:
   my:
-    KnowledgeFile:
+    knowledge-file:
       local-root: "D:/java/ai-interview-data/uploads"

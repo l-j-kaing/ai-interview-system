@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.Map;
-
 @Component
 public class PythonRagClient {
     private final RestClient restClient;
@@ -30,13 +28,7 @@ public class PythonRagClient {
      * 请求对知识文件进行切块
      */
     public RagChunkResponse chunkKnowledgeFile(RagChunkRequest request) {
-        Map<String, String> requestBody = Map.of(
-                "file_path", request.getFilePath(),
-                "chunk_size", String.valueOf(request.getChunkSize()),
-                "chunk_overlap", String.valueOf(request.getChunkOverlap()),
-                "split_punctuations", String.valueOf(request.getSplitPunctuations())
-        );
-        String jsonBody = objectMapper.writeValueAsString(requestBody);
+        String jsonBody = objectMapper.writeValueAsString(request);
         return restClient.post()
                 .uri("/api/knowledge/chunk/punctuation")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -48,12 +40,7 @@ public class PythonRagClient {
      * 请求对知识块进行向量化
      */
     public void vectorizeKnowledgeChunks(RagVectorRequest request) {
-        Map<String, String> requestBody = Map.of(
-                "file_id", request.getFileId(),
-                "chunks", String.valueOf(request.getChunks()),
-                "category", String.valueOf(request.getCategory())
-        );
-        String jsonBody = objectMapper.writeValueAsString(requestBody);
+        String jsonBody = objectMapper.writeValueAsString(request);
         restClient.post()
                 .uri("/api/knowledge/vectorize")
                 .contentType(MediaType.APPLICATION_JSON)

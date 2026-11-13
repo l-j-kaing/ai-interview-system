@@ -1,4 +1,3 @@
-from httpx import delete
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from redis import Redis
 
@@ -58,11 +57,17 @@ class KnowledgeService:
         if chunks is None:
             raise ValueError("缓存不存在或已过期")
         #进行向量化
+        categories = data.category
+        if len(categories) == 1:
+            categories = categories * len(chunks)
+        elif len(categories) != len(chunks):
+            raise ValueError("分类数量必须为 1 或与分块数量一致")
+
         inserted_count = add_pdf_chunks(
             chunks=chunks,
             user_id=data.user_id,
             file_id=data.file_id,
-            category=data.category,
+            category=categories,
             visibility=data.visibility
         )
         if inserted_count == 0:

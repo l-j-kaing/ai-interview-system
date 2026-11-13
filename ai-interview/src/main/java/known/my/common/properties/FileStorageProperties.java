@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "known.my.knowledgeFile")
+@ConfigurationProperties(prefix = "known.my.knowledge-file")
 @Data
 public class FileStorageProperties {
     private String localRoot;

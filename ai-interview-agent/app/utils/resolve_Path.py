@@ -1,6 +1,6 @@
 from pathlib import Path
 from app.core.config import settings
-ROOT_DIR = settings.root_dir
+ROOT_DIR = settings.dir_root
 def resolve_path(storage_path):
     if not storage_path or not str(storage_path).strip():
         return None
