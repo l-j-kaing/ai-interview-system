@@ -1,10 +1,7 @@
 package known.my.service.impl;
 
-import known.my.common.exception.AccountLockedException;
-import known.my.common.exception.AccountNotFoundException;
 import known.my.common.exception.BaseException;
-import known.my.common.exception.PasswordErrorException;
-import known.my.common.exception.PasswordEditFailedException;
+import known.my.common.result.ResultCode;
 import known.my.mapper.UserMapper;
 import known.my.pojo.dto.UserLoginDTO;
 import known.my.pojo.dto.UserRegisterDTO;
@@ -36,14 +33,14 @@ public class UserServiceImpl implements UserService {
 
         if(user == null){
         //用户不存在
-            throw new AccountNotFoundException("用户不存在");
+            throw new BaseException(ResultCode.NOT_FOUND, "用户不存在");
         }
         if(!password.equals(user.getPasswordHash())){
             //密码错误
-            throw new PasswordErrorException("密码错误");
+            throw new BaseException(ResultCode.UNAUTHORIZED, "用户名或密码错误");
         }
         if(user.getStatus().equals("DISABLED")){
-            throw new AccountLockedException("账号已禁用");
+            throw new BaseException(ResultCode.FORBIDDEN, "账号已禁用");
         }
         return user;
     }
@@ -79,7 +76,7 @@ public class UserServiceImpl implements UserService {
         if (!updateProfileDTO.isNicknameProvided()
                 && !updateProfileDTO.isEmailProvided()
                 && !updateProfileDTO.isAvatarUrlProvided()) {
-            throw new BaseException("请至少提供一个需要修改的资料字段");
+            throw new BaseException(ResultCode.PARAM_ERROR, "请至少提供一个需要修改的资料字段");
         }
 
         getUserById(userId);
@@ -95,7 +92,7 @@ public class UserServiceImpl implements UserService {
         User user = getUserById(userId);
         String oldPasswordHash = DigestUtils.md5DigestAsHex(updatePasswordDTO.getOldPassword().getBytes());
         if (!oldPasswordHash.equals(user.getPasswordHash())) {
-            throw new PasswordEditFailedException("原密码错误");
+            throw new BaseException(ResultCode.PARAM_ERROR, "原密码错误");
         }
 
         user.setPasswordHash(DigestUtils.md5DigestAsHex(updatePasswordDTO.getNewPassword().getBytes()));
@@ -105,7 +102,7 @@ public class UserServiceImpl implements UserService {
     private User getUserById(Long userId) {
         User user = userMapper.selectUserById(userId);
         if (user == null) {
-            throw new AccountNotFoundException("用户不存在");
+            throw new BaseException(ResultCode.NOT_FOUND, "用户不存在");
         }
         return user;
     }

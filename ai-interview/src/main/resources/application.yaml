@@ -29,12 +29,15 @@ mybatis:
     # 开启驼峰命名
     map-underscore-to-camel-case: true
 
-sky:
+python:
+  agent:
+    base-url: ${python.agent.base-url}
+
+known:
+  my:
+    KnowledgeFile:
+      local-root: ${known.my.KnowledgeFile.storage-path}
   jwt:
     user-secret-key: itcast
     user-ttl: 720000000
     user-token-name: authentication
-
-python:
-  agent:
-    base-url: ${python.agent.base-url}

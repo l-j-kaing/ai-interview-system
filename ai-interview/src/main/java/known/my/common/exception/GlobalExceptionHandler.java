@@ -1,7 +1,7 @@
-package known.my.handler;
+package known.my.common.exception;
 
-import known.my.common.exception.BaseException;
 import known.my.common.result.Result;
+import known.my.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,8 +22,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler
     public Result exceptionHandler(BaseException ex){
-        log.error("异常信息：{}", ex.getMessage());
-        return Result.error(ex.getMessage());
+        log.error("异常响应码：{}。异常信息：{}",ex.getCode(), ex.getMessage());
+        return Result.error(ex.getCode(),ex.getMessage());
     }
     /**
      * 捕获用户名重复异常
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
         if(message.contains("Duplicate entry")){
             //获取重复的用户名
             String username = message.substring(message.indexOf("Duplicate entry") + 15, message.indexOf("for key"));
-            return Result.error(username + "已存在");
+            return Result.error(ResultCode.PARAM_ERROR.getCode(),username + "已存在");
     }else {
             return Result.error("未知错误");
         }

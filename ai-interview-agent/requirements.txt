@@ -4,6 +4,10 @@ fastapi==0.162.0
 # Agent orchestration layer
 langgraph==1.2.20
 
+# Vector database client
+langchain-milvus==0.3.3
+pymilvus==2.6.0
+
 # ASGI server layer
 uvicorn[standard]==0.54.0
 

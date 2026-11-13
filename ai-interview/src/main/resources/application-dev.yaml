@@ -14,3 +14,8 @@ spring:
 python:
   agent:
     base-url: http://localhost:8000
+
+known:
+  my:
+    KnowledgeFile:
+      local-root: "D:/java/ai-interview-data/uploads"

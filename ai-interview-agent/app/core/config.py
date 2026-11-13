@@ -25,5 +25,12 @@ class Settings:
     redis_checkpoint_ttl: int = int(
         os.getenv("REDIS_CHECKPOINT_TTL", "43200")
     )
+    # 文件存储根目录
+    dir_root: str = os.getenv("DIR_ROOT", "")
+    # Milvus
+    milvus_uri: str = os.getenv("MILVUS_URI", "")
+    milvus_collection_name: str = os.getenv("MILVUS_COLLECTION_NAME", "")
+    #embedding
+    siliconflow_api_key: str | None = os.getenv("SILICONFLOW_API_KEY")
 
 settings = Settings()

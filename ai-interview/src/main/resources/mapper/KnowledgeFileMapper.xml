@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="known.my.mapper.KnowledgeFileMapper">
+    <insert id="insertKnowledgeFile" parameterType="known.my.pojo.entity.KnowledgeFile"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into knowledge_files
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            user_id, file_id,
+            <if test="fileName != null">file_name,</if>
+            <if test="fileType != null">file_type,</if>
+            <if test="fileSize != null">file_size,</if>
+            <if test="category != null">category,</if>
+            <if test="visibility != null">visibility,</if>
+            <if test="storagePath != null">storage_path,</if>
+            <if test="status != null">status,</if>
+            <if test="createdAt != null">created_at,</if>
+            <if test="updatedAt != null">updated_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{userId}, #{fileId},
+            <if test="fileName != null">#{fileName},</if>
+            <if test="fileType != null">#{fileType},</if>
+            <if test="fileSize != null">#{fileSize},</if>
+            <if test="category != null">#{category},</if>
+            <if test="visibility != null">#{visibility},</if>
+            <if test="storagePath != null">#{storagePath},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createdAt != null">#{createdAt},</if>
+            <if test="updatedAt != null">#{updatedAt},</if>
+        </trim>
+    </insert>
+
+    <select id="selectKnowledgeFilesByUserId" resultType="known.my.pojo.entity.KnowledgeFile">
+        select id, user_id, file_id, file_name, file_type, file_size,
+               category, visibility, storage_path, status, created_at, updated_at
+        from knowledge_files
+        where user_id = #{userId}
+    </select>
+
+    <select id="selectKnowledgeFileByUserIdAndFileId"
+            resultType="known.my.pojo.entity.KnowledgeFile">
+        select id, user_id, file_id, file_name, file_type, file_size,
+               category, visibility, storage_path, status, created_at, updated_at
+        from knowledge_files
+        where user_id = #{userId} and file_id = #{fileId}
+    </select>
+
+    <select id="selectKnowledgeFileInfoByUserIdAndFileId"
+            resultType="known.my.pojo.entity.KnowledgeFile">
+        select id, user_id, file_id, file_name, file_type, file_size,
+               category, visibility, status
+        from knowledge_files
+        where user_id = #{userId} and file_id = #{fileId}
+    </select>
+
+    <update id="updateKnowledgeFile" parameterType="known.my.pojo.entity.KnowledgeFile">
+        update knowledge_files
+        <set>
+            <if test="category != null">category = #{category},</if>
+            <if test="visibility != null">visibility = #{visibility},</if>
+            <if test="storagePath != null">storage_path = #{storagePath},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        where user_id = #{userId}
+          and file_id = #{fileId}
+          and (#{category} is not null
+            or #{visibility} is not null
+            or #{storagePath} is not null
+            or #{status} is not null)
+    </update>
+</mapper>

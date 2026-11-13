@@ -2,23 +2,23 @@ package known.my.service.impl;
 
 import known.my.client.PythonAgentClient;
 import known.my.common.context.BaseContext;
+import known.my.common.exception.BaseException;
+import known.my.common.result.ResultCode;
 import known.my.mapper.InterviewMapper;
-import known.my.mapper.InterviewMessageMapper;
 import known.my.mapper.InterviewQuestionMapper;
 import known.my.pojo.dto.InterviewContinueDTO;
 import known.my.pojo.dto.InterviewStartDTO;
 import known.my.pojo.entity.Interview;
-import known.my.pojo.entity.InterviewMessage;
 import known.my.pojo.entity.InterviewQuestion;
 import known.my.pojo.enums.InterruptStatus;
 import known.my.pojo.enums.InterviewStatus;
-import known.my.pojo.enums.Role;
 import known.my.pojo.request.AgentInterviewContinueRequest;
 import known.my.pojo.request.AgentInterviewStartRequest;
 import known.my.pojo.response.AgentInterviewContinueResponse;
 import known.my.pojo.response.AgentInterviewStartResponse;
 import known.my.pojo.vo.InterviewContinueVO;
 import known.my.pojo.vo.InterviewStartVO;
+import known.my.service.InterviewPersistenceService;
 import known.my.service.InterviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,6 @@ public class InterviewServiceImpl implements InterviewService {
     private final InterviewMapper interviewMapper;
     private final PythonAgentClient pythonAgentClient;
     private final InterviewQuestionMapper interviewQuestionMapper;
-    private final InterviewMessageMapper interviewMessageMapper;
     private final InterviewPersistenceService interviewPersistenceService;
 
 
@@ -50,7 +49,7 @@ public class InterviewServiceImpl implements InterviewService {
                 .status(InterviewStatus.CREATED.name())
                 .build();
         if (interviewMapper.insertInterview(interview) != 1) {
-            throw new IllegalStateException("未能创建面试记录");
+            throw new BaseException(ResultCode.INTERNAL_ERROR, "未能创建面试记录");
         }
 
         try {
@@ -61,13 +60,19 @@ public class InterviewServiceImpl implements InterviewService {
                     .difficultyMode(interviewStartDTO.getDifficultyMode())
                     .currentDifficulty(interviewStartDTO.getCurrentDifficulty())
                     .build();
-            AgentInterviewStartResponse agentResponse = pythonAgentClient.startInterview(agentRequest);
+            AgentInterviewStartResponse agentResponse;
+            try {
+                agentResponse = pythonAgentClient.startInterview(agentRequest);
+            } catch (RuntimeException e) {
+                throw new BaseException(ResultCode.AI_SERVICE_UNAVAILABLE,
+                        "AI面试服务暂不可用", e);
+            }
             if (agentResponse == null || agentResponse.getQuestion() == null
                     || agentResponse.getQuestion().isBlank()
                     || agentResponse.getQuestionNo() == null || agentResponse.getQuestionNo() != 1
                     || agentResponse.getDifficulty() == null || agentResponse.getInterviewId() == null
                     || !interview.getInterviewId().equals(agentResponse.getInterviewId())) {
-                throw new IllegalStateException("Python Agent 未返回有效的首道面试题");
+                throw new BaseException(ResultCode.AI_SERVICE_ERROR, "AI面试服务未返回有效的首道面试题");
             }
 
             interviewPersistenceService.saveFirstQuestion(
@@ -82,6 +87,16 @@ public class InterviewServiceImpl implements InterviewService {
                     .questionNo(agentResponse.getQuestionNo())
                     .content(agentResponse.getQuestion())
                     .build();
+        } catch (BaseException e) {
+            interviewMapper.updateInterviewFieldsByInterviewId(
+                    interview.getInterviewId(),
+                    InterviewStatus.ABORTED.name(),
+                    null,
+                    null,
+                    null
+            );
+            log.error("启动面试失败，interviewId={}", interview.getInterviewId(), e);
+            throw e;
         } catch (Exception e) {
             interviewMapper.updateInterviewFieldsByInterviewId(
                     interview.getInterviewId(),
@@ -91,7 +106,7 @@ public class InterviewServiceImpl implements InterviewService {
                     null
             );
             log.error("启动面试失败，interviewId={}", interview.getInterviewId(), e);
-            throw new IllegalStateException("启动面试失败", e);
+            throw new BaseException(ResultCode.INTERNAL_ERROR, "启动面试失败", e);
         }
     }
     /** 继续面试，传递用户答案，并获取下一道面试题或结束面试 */
@@ -100,39 +115,39 @@ public class InterviewServiceImpl implements InterviewService {
         String interviewId = interviewContinueDTO.getInterviewId();
         Long userId = BaseContext.getCurrentId();
         Interview interview = interviewMapper.selectInterviewById(interviewId);
-        if (interview == null || userId == null || !userId.equals(interview.getUserId())) {
-            throw new IllegalStateException("面试不存在或当前用户无权访问");
+        if (interview == null) {
+            throw new BaseException(ResultCode.NOT_FOUND, "面试不存在");
+        }
+        if (userId == null) {
+            throw new BaseException(ResultCode.UNAUTHORIZED, "未登录或登录状态已失效");
+        }
+        if (!userId.equals(interview.getUserId())) {
+            throw new BaseException(ResultCode.FORBIDDEN, "无权访问该面试");
         }
         if (!InterviewStatus.IN_PROGRESS.name().equals(interview.getStatus())) {
-            throw new IllegalStateException("当前面试不处于进行中状态，无法继续回答");
+            throw new BaseException(ResultCode.BUSINESS_CONFLICT, "当前面试不处于进行中状态，无法继续回答");
         }
 
         InterviewQuestion interviewQuestion = interviewQuestionMapper.selectLatestQuestionByInterviewId(interviewId);
         if (interviewQuestion == null) {
-            throw new IllegalStateException("未找到面试当前题目，interviewId=" + interviewId);
+            throw new BaseException(ResultCode.NOT_FOUND, "未找到面试当前题目");
         }
 
-        InterviewMessage interviewMessage = InterviewMessage.builder()
-                .interviewId(interviewId)
-                .userId(userId)
-                .questionNo(interviewQuestion.getQuestionNo())
-                .role(Role.USER.name())
-                .content(interviewContinueDTO.getAnswer())
-                .build();
-        if (interviewMessageMapper.insertInterviewMessage(interviewMessage) != 1) {
-            throw new IllegalStateException("未能保存用户回答历史，interviewId="
-                    + interviewContinueDTO.getInterviewId());
-        }
+        interviewPersistenceService.saveUserAnswer(
+                interviewId, userId, interviewQuestion.getQuestionNo(), interviewContinueDTO.getAnswer());
 
         AgentInterviewContinueRequest agentRequest = AgentInterviewContinueRequest.builder()
                 .interviewId(interviewId)
                 .answer(interviewContinueDTO.getAnswer())
                 .build();
-        AgentInterviewContinueResponse agentResponse = pythonAgentClient.continueInterview(
-                agentRequest
-        );
+        AgentInterviewContinueResponse agentResponse;
+        try {
+            agentResponse = pythonAgentClient.continueInterview(agentRequest);
+        } catch (RuntimeException e) {
+            throw new BaseException(ResultCode.AI_SERVICE_UNAVAILABLE, "AI面试服务暂不可用", e);
+        }
         if (agentResponse == null || agentResponse.getStatus() == null) {
-            throw new IllegalStateException("Python Agent 未返回有效的面试状态");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR, "AI面试服务未返回有效的面试状态");
         }
 
         return switch (agentResponse.getStatus()) {
@@ -141,8 +156,8 @@ public class InterviewServiceImpl implements InterviewService {
                     interviewContinueDTO, userId, interviewQuestion, agentResponse);
             case "FINISHED" -> finishInterview(
                     interviewContinueDTO, userId, interviewQuestion, agentResponse);
-            default -> throw new IllegalStateException("Python Agent 返回未知面试状态："
-                    + agentResponse.getStatus());
+            default -> throw new BaseException(ResultCode.AI_SERVICE_ERROR,
+                    "AI面试服务返回未知面试状态：" + agentResponse.getStatus());
         };
     }
 
@@ -151,11 +166,11 @@ public class InterviewServiceImpl implements InterviewService {
                                              InterviewQuestion currentQuestion,
                                              AgentInterviewContinueResponse response) {
         if (response.getQuestion() == null || response.getQuestion().isBlank()) {
-            throw new IllegalStateException("Python Agent 未返回当前追问内容");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR, "AI面试服务未返回当前追问内容");
         }
         if (response.getQuestionNo() != null
                 && !response.getQuestionNo().equals(currentQuestion.getQuestionNo())) {
-            throw new IllegalStateException("Python Agent 返回的追问题号与当前题目不一致");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR, "AI面试服务返回的追问题号与当前题目不一致");
         }
         interviewPersistenceService.saveAssistantMessage(
                 request.getInterviewId(), userId, currentQuestion.getQuestionNo(), response.getQuestion());
@@ -174,11 +189,13 @@ public class InterviewServiceImpl implements InterviewService {
                 || response.getDifficulty() == null || response.getQuestionNo() == null
                 || response.getQuestionEvaluation() == null
                 || response.getCompletedQuestionNo() == null) {
-            throw new IllegalStateException("Python Agent 未返回完整的已完成题目评价或下一题信息");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR,
+                    "AI面试服务未返回完整的已完成题目评价或下一题信息");
         }
         if (!response.getCompletedQuestionNo().equals(currentQuestion.getQuestionNo())
                 || response.getQuestionNo() != currentQuestion.getQuestionNo() + 1) {
-            throw new IllegalStateException("Python Agent 返回的完成题号或下一题号与当前面试进度不一致");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR,
+                    "AI面试服务返回的完成题号或下一题号与当前面试进度不一致");
         }
         interviewPersistenceService.completeQuestionAndSaveNext(
                 request.getInterviewId(),
@@ -207,7 +224,8 @@ public class InterviewServiceImpl implements InterviewService {
                 : response.getQuestionNo();
         if (completedQuestionNo == null || response.getQuestionEvaluation() == null
                 || !completedQuestionNo.equals(currentQuestion.getQuestionNo())) {
-            throw new IllegalStateException("Python Agent 未返回与当前题目匹配的完整最终评价");
+            throw new BaseException(ResultCode.AI_SERVICE_ERROR,
+                    "AI面试服务未返回与当前题目匹配的完整最终评价");
         }
         interviewPersistenceService.completeQuestionAndInterview(
                 request.getInterviewId(),
